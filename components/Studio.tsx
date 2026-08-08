@@ -36,6 +36,9 @@ export default function Studio() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [handle, setHandle] = useState("");
+  const [shipping, setShipping] = useState("");
+  /** Blank means "use the generated title"; typing overrides it. */
+  const [titleOverride, setTitleOverride] = useState("");
   const [salt, setSalt] = useState(0);
 
   const [loading, setLoading] = useState(false);
@@ -100,7 +103,16 @@ export default function Studio() {
       if (mode === "pfp") {
         renderPfp(canvas, { photo: photo.canvas, transform, theme, handle });
       } else {
-        await renderCard(canvas, { photo: photo.canvas, transform, name, role, salt });
+        await renderCard(canvas, {
+          photo: photo.canvas,
+          transform,
+          name,
+          role,
+          handle,
+          shipping,
+          title: titleOverride,
+          salt,
+        });
       }
       if (stale) return;
 
@@ -115,7 +127,7 @@ export default function Studio() {
     return () => {
       stale = true;
     };
-  }, [photo, mode, transform, theme, handle, name, role, salt]);
+  }, [photo, mode, transform, theme, handle, name, role, shipping, titleOverride, salt]);
 
   // --- Pan / zoom ---------------------------------------------------------
   const dragState = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -486,19 +498,50 @@ export default function Studio() {
                     maxLength={38}
                   />
                 </Field>
+                <Field label="X handle">
+                  <Input
+                    value={handle}
+                    onChange={setHandle}
+                    placeholder="@yourhandle"
+                    maxLength={20}
+                  />
+                  <p className="mt-1.5 text-[11px] text-hh-cream/45">
+                    Also sets the card&apos;s QR code — it points at your X profile.
+                  </p>
+                </Field>
+
+                <Field label="Currently shipping">
+                  <Input
+                    value={shipping}
+                    onChange={setShipping}
+                    placeholder="What you're building"
+                    maxLength={34}
+                  />
+                </Field>
+
                 <Field label="Builder title">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 rounded-xl bg-hh-pink/90 text-hh-cream px-3 py-2.5 text-xs font-bold truncate">
-                      {title}
-                    </div>
+                    <input
+                      value={titleOverride || title}
+                      onChange={(e) => setTitleOverride(e.target.value)}
+                      maxLength={30}
+                      className="flex-1 min-w-0 rounded-xl bg-hh-pink/90 border-2 border-transparent px-3 py-2.5 text-xs font-bold text-hh-cream placeholder:text-hh-cream/60 focus:border-hh-yellow focus:outline-none transition-colors"
+                    />
                     <button
-                      onClick={() => setSalt((s) => s + 1)}
+                      onClick={() => {
+                        // Drop the override so the freshly rolled title shows.
+                        setTitleOverride("");
+                        setSalt((s) => s + 1);
+                      }}
                       className="shrink-0 rounded-xl border-2 border-hh-cream/30 px-3 py-2.5 text-xs font-bold hover:border-hh-yellow hover:text-hh-yellow transition-colors"
                       title="Generate a different title"
                     >
                       Reroll
                     </button>
                   </div>
+                  <p className="mt-1.5 text-[11px] text-hh-cream/45">
+                    Type your own, or reroll for a generated one.
+                  </p>
                 </Field>
               </>
             )}

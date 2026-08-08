@@ -183,9 +183,9 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
 
   const textX = qrX + QR_SIZE + 30;
   const label = (text: string, y: number) => {
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.font = `500 15px "${MONO}", ui-monospace, monospace`;
-    drawTracked(ctx, text, textX, y, 3, "left");
+    ctx.fillStyle = "rgba(0,0,0,0.42)";
+    ctx.font = `500 13px "${MONO}", ui-monospace, monospace`;
+    drawTracked(ctx, text, textX, y, 2.5, "left");
   };
   const value = (text: string, y: number, size: number, color: string) => {
     ctx.fillStyle = color;
@@ -205,18 +205,19 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
   if (shipping) {
     rows.push({ label: "CURRENTLY SHIPPING", value: shipping.toUpperCase() });
   } else if (handle && !target.display.startsWith("@")) {
-    // QR went to GitHub, so the X handle still gets its own line.
-    rows.push({ label: "FIND ME AT", value: `@${handle}` });
+    // QR went to GitHub, so the X handle still gets its own line. Uppercased to
+    // match the GitHub line above it and the rest of the card's mono setting.
+    rows.push({ label: "FIND ME AT", value: `@${handle}`.toUpperCase() });
   }
 
   if (rows.length === 2) {
-    label(rows[0].label, INFO_TOP + 16);
-    value(rows[0].value, INFO_TOP + 46, 27, COLORS.green);
+    label(rows[0].label, INFO_TOP + 20);
+    value(rows[0].value, INFO_TOP + 45, 22, COLORS.green);
     label(rows[1].label, INFO_TOP + 72);
-    value(rows[1].value, INFO_TOP + 98, 23, COLORS.black);
+    value(rows[1].value, INFO_TOP + 95, 19, COLORS.black);
   } else {
-    label(rows[0].label, INFO_TOP + 30);
-    value(rows[0].value, INFO_TOP + 68, 32, COLORS.green);
+    label(rows[0].label, INFO_TOP + 36);
+    value(rows[0].value, INFO_TOP + 68, 26, COLORS.green);
   }
 
   // --- Palm band ----------------------------------------------------------

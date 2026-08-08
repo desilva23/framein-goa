@@ -607,15 +607,11 @@ function Actions({
       >
         {onShareImage ? "Share" : preparing ? "Preparing…" : "Share on X"}
       </button>
-      {onShareImage && (
-        <button
-          onClick={onShareX}
-          disabled={preparing}
-          className="flex-1 w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition disabled:opacity-60"
-        >
-          {preparing ? "Preparing…" : "Post to X"}
-        </button>
-      )}
+      {/* No secondary "Post to X" here. Where the native sheet is available it
+          attaches the PNG itself, which beats a link card outright; offering the
+          link path alongside it only invited people into the weaker flow. On
+          desktop there is no file-sharing sheet, so the button above *is* the
+          link path and remains the only way to reach X. */}
       <button
         onClick={onDownload}
         className="flex-1 w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition"

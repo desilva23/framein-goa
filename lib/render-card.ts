@@ -29,8 +29,10 @@ export type CardOptions = {
   transform: Transform;
   name: string;
   role: string;
-  /** X handle, without the @. Drives both the card line and the QR target. */
+  /** X handle, without the @. Printed on the card; QR falls back to it. */
   handle?: string;
+  /** GitHub username. Preferred QR target. */
+  github?: string;
   /** Free-text "what you're building right now". */
   shipping?: string;
   /** User-supplied title; falls back to the generated one when blank. */
@@ -58,13 +60,14 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
   const role = opts.role.trim() || "BUILDER";
   const handle = opts.handle?.trim().replace(/^@/, "") ?? "";
   const shipping = opts.shipping?.trim() ?? "";
+  const target = qrTarget(opts.github, handle);
   const title = opts.title?.trim() || builderTitle(name, role, opts.salt ?? 0);
   const number = builderNumber(name, role, opts.salt ?? 0);
 
   const [wordmark, trees, qr] = await Promise.all([
     asset(ASSETS.wordmark).catch(() => null),
     asset(ASSETS.trees).catch(() => null),
-    qrCanvas(qrTarget(handle), 256).catch(() => null),
+    qrCanvas(target.url, 256).catch(() => null),
   ]);
 
   ctx.fillStyle = COLORS.greenDeep;
@@ -197,14 +200,23 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
     drawTracked(ctx, text, textX, y, s * 0.06, "left");
   };
 
+  // First row always describes the QR, so the caption matches what scanning does.
+  const rows = [{ label: target.label, value: target.display }];
   if (shipping) {
-    label("FIND ME AT", INFO_TOP + 16);
-    value(handle ? `@${handle}` : EVENT.site.toUpperCase(), INFO_TOP + 46, 27, COLORS.green);
-    label("CURRENTLY SHIPPING", INFO_TOP + 72);
-    value(shipping.toUpperCase(), INFO_TOP + 98, 23, COLORS.black);
+    rows.push({ label: "CURRENTLY SHIPPING", value: shipping.toUpperCase() });
+  } else if (handle && !target.display.startsWith("@")) {
+    // QR went to GitHub, so the X handle still gets its own line.
+    rows.push({ label: "FIND ME AT", value: `@${handle}` });
+  }
+
+  if (rows.length === 2) {
+    label(rows[0].label, INFO_TOP + 16);
+    value(rows[0].value, INFO_TOP + 46, 27, COLORS.green);
+    label(rows[1].label, INFO_TOP + 72);
+    value(rows[1].value, INFO_TOP + 98, 23, COLORS.black);
   } else {
-    label("FIND ME AT", INFO_TOP + 30);
-    value(handle ? `@${handle}` : EVENT.site.toUpperCase(), INFO_TOP + 68, 32, COLORS.green);
+    label(rows[0].label, INFO_TOP + 30);
+    value(rows[0].value, INFO_TOP + 68, 32, COLORS.green);
   }
 
   // --- Palm band ----------------------------------------------------------

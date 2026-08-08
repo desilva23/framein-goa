@@ -36,6 +36,7 @@ export default function Studio() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [handle, setHandle] = useState("");
+  const [github, setGithub] = useState("");
   const [shipping, setShipping] = useState("");
   /** Blank means "use the generated title"; typing overrides it. */
   const [titleOverride, setTitleOverride] = useState("");
@@ -109,6 +110,7 @@ export default function Studio() {
           name,
           role,
           handle,
+          github,
           shipping,
           title: titleOverride,
           salt,
@@ -127,7 +129,7 @@ export default function Studio() {
     return () => {
       stale = true;
     };
-  }, [photo, mode, transform, theme, handle, name, role, shipping, titleOverride, salt]);
+  }, [photo, mode, transform, theme, handle, github, name, role, shipping, titleOverride, salt]);
 
   // --- Pan / zoom ---------------------------------------------------------
   const dragState = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -498,6 +500,18 @@ export default function Studio() {
                     maxLength={38}
                   />
                 </Field>
+                <Field label="GitHub username">
+                  <Input
+                    value={github}
+                    onChange={setGithub}
+                    placeholder="your-username"
+                    maxLength={39}
+                  />
+                  <p className="mt-1.5 text-[11px] text-hh-cream/45">
+                    Sets the card&apos;s QR code — scanning it opens your repos.
+                  </p>
+                </Field>
+
                 <Field label="X handle">
                   <Input
                     value={handle}
@@ -505,9 +519,6 @@ export default function Studio() {
                     placeholder="@yourhandle"
                     maxLength={20}
                   />
-                  <p className="mt-1.5 text-[11px] text-hh-cream/45">
-                    Also sets the card&apos;s QR code — it points at your X profile.
-                  </p>
                 </Field>
 
                 <Field label="Currently shipping">

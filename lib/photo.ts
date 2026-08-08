@@ -37,7 +37,7 @@ async function toBitmap(blob: Blob): Promise<ImageBitmap | HTMLImageElement> {
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("Unsupported image file"));
+      img.onerror = () => reject(new Error("That file isn't an image we can read."));
       img.src = url;
     });
   } finally {

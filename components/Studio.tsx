@@ -265,11 +265,15 @@ export default function Studio() {
         className="sr-only"
         onChange={(e) => {
           const f = e.target.files?.[0];
+          // Clear the value so picking the *same* file again still fires a change
+          // event — otherwise a retry after a failed decode does nothing.
+          e.target.value = "";
           if (f) openFile(f);
         }}
       />
 
       {!photo ? (
+        <div>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -303,6 +307,18 @@ export default function Studio() {
             Everything renders in your browser. Nothing is uploaded until you tap Share.
           </p>
         </button>
+
+        {/* A first upload that fails leaves no canvas to hang a message on, so
+            the dropzone reports it here. */}
+        {error && (
+          <p
+            role="alert"
+            className="mt-3 text-xs text-hh-yellow bg-black/30 rounded-lg p-3 text-center"
+          >
+            {error}
+          </p>
+        )}
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
           {/* Preview */}

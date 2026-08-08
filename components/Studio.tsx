@@ -43,6 +43,10 @@ export default function Studio() {
   const [status, setStatus] = useState<string | null>(null);
   const [canShareFiles, setCanShareFiles] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  /** Set once the graphic is uploaded and an X compose link exists. */
+  const [share, setShare] = useState<{ pageUrl: string; intentUrl: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const title = useMemo(
     () => builderTitle(name || "Your Name", role || "Builder", salt),
@@ -84,6 +88,9 @@ export default function Studio() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !photo) return;
+
+    // Any edit invalidates an existing share link — it points at the old PNG.
+    setShare((prev) => (prev ? null : prev));
 
     let stale = false;
     (async () => {
@@ -202,13 +209,20 @@ export default function Studio() {
   };
 
   /**
-   * Upload the PNG, then open X with a link whose OG image *is* that PNG.
-   * The popup is opened synchronously so Safari doesn't block it.
+   * Upload the PNG, then hand back an X compose link whose OG image *is* that PNG.
+   *
+   * This deliberately does NOT pre-open a popup and point it at the intent once
+   * the upload resolves. Safari treats the user gesture as spent the moment we
+   * await, so the popup it allowed gets torn down before it can navigate and the
+   * button appears to do nothing. Instead the link is rendered as a real anchor
+   * for the user to tap — a fresh gesture that can never be blocked — and we
+   * only *attempt* to open it automatically as a convenience.
    */
   const shareToX = async () => {
     setError(null);
-    setStatus("Uploading your graphic…");
-    const popup = window.open("", "_blank");
+    setCopied(false);
+    setPreparing(true);
+    setStatus("Preparing your link…");
 
     try {
       const canvas = canvasRef.current;
@@ -229,19 +243,33 @@ export default function Studio() {
       const { pageUrl } = (await res.json()) as { pageUrl: string };
 
       const intent = new URL("https://x.com/intent/post");
-      intent.searchParams.set("text", `${SHARE_TEXT}`);
+      intent.searchParams.set("text", SHARE_TEXT);
       intent.searchParams.set("url", pageUrl);
       intent.searchParams.set("hashtags", "FrameInGoa");
+      const intentUrl = intent.toString();
 
-      if (popup) popup.location.href = intent.toString();
-      else window.location.href = intent.toString();
-      setStatus("Opened X with your graphic attached as the link preview.");
+      setShare({ pageUrl, intentUrl });
+      setStatus("Ready — tap Open X to post it.");
+
+      // Best-effort: on desktop this lands straight in X. If the browser
+      // declines, the anchor below is the guaranteed path.
+      window.open(intentUrl, "_blank", "noopener,noreferrer");
     } catch {
-      popup?.close();
-      setError(
-        "Couldn't upload. Download the image and attach it to your post instead.",
-      );
+      setError("Couldn't upload. Download the image and attach it to your post instead.");
       setStatus(null);
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!share) return;
+    try {
+      await navigator.clipboard.writeText(share.pageUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setError("Couldn't copy — long-press the link to copy it manually.");
     }
   };
 
@@ -466,6 +494,10 @@ export default function Studio() {
                 onShareX={shareToX}
                 onShareImage={canShareFiles ? shareImage : undefined}
                 onReset={reset}
+                onCopy={copyLink}
+                share={share}
+                preparing={preparing}
+                copied={copied}
               />
             </div>
 
@@ -486,6 +518,10 @@ export default function Studio() {
               onShareX={shareToX}
               onShareImage={canShareFiles ? shareImage : undefined}
               onReset={reset}
+              onCopy={copyLink}
+              share={share}
+              preparing={preparing}
+              copied={copied}
               compact
             />
           </div>
@@ -500,28 +536,69 @@ function Actions({
   onShareX,
   onShareImage,
   onReset,
+  onCopy,
+  share,
+  preparing,
+  copied,
   compact,
 }: {
   onDownload: () => void;
   onShareX: () => void;
   onShareImage?: () => void;
   onReset: () => void;
+  onCopy: () => void;
+  share: { pageUrl: string; intentUrl: string } | null;
+  preparing: boolean;
+  copied: boolean;
   compact?: boolean;
 }) {
+  // Once the upload is done the primary control becomes a plain anchor. Tapping
+  // it is a fresh user gesture, so no browser can block the hand-off to X.
+  if (share) {
+    return (
+      <div className={compact ? "flex gap-2" : "space-y-2"}>
+        <a
+          href={share.intentUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex-1 w-full text-center rounded-xl bg-hh-yellow text-hh-green-deep font-extrabold py-3 px-4 text-sm hover:brightness-95 active:brightness-90 transition"
+        >
+          Open X →
+        </a>
+        <button
+          onClick={onCopy}
+          className="flex-1 w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition"
+        >
+          {copied ? "Copied ✓" : "Copy link"}
+        </button>
+        {!compact && (
+          <button
+            onClick={onDownload}
+            className="w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition"
+          >
+            Download
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={compact ? "flex gap-2" : "space-y-2"}>
       <button
         onClick={onShareImage ?? onShareX}
-        className="flex-1 w-full rounded-xl bg-hh-yellow text-hh-green-deep font-extrabold py-3 px-4 text-sm hover:brightness-95 active:brightness-90 transition"
+        disabled={preparing}
+        className="flex-1 w-full rounded-xl bg-hh-yellow text-hh-green-deep font-extrabold py-3 px-4 text-sm hover:brightness-95 active:brightness-90 transition disabled:opacity-60"
       >
-        {onShareImage ? "Share" : "Share on X"}
+        {onShareImage ? "Share" : preparing ? "Preparing…" : "Share on X"}
       </button>
       {onShareImage && (
         <button
           onClick={onShareX}
-          className="flex-1 w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition"
+          disabled={preparing}
+          className="flex-1 w-full rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition disabled:opacity-60"
         >
-          Post to X
+          {preparing ? "Preparing…" : "Post to X"}
         </button>
       )}
       <button

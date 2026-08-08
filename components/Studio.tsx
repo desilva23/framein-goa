@@ -667,15 +667,8 @@ function Actions({
         disabled={preparing}
         className="flex-1 w-full rounded-xl bg-hh-yellow text-hh-green-deep font-extrabold py-3 px-4 text-sm hover:brightness-95 active:brightness-90 transition disabled:opacity-60"
       >
-        {onShareImage ? "Share" : preparing ? "Preparing…" : "Share"}
+        {onShareImage ? "Share" : preparing ? "Preparing…" : "Share on X"}
       </button>
-      {/* The button used to read "Share on X", which hid the LinkedIn option
-          behind a label that promised only X. */}
-      {!onShareImage && !preparing && (
-        <p className="text-[11px] text-hh-cream/45 text-center pt-0.5 pb-1">
-          Gives you X, LinkedIn and a copy-able link
-        </p>
-      )}
       {/* No secondary "Post to X" here. Where the native sheet is available it
           attaches the PNG itself, which beats a link card outright; offering the
           link path alongside it only invited people into the weaker flow. On

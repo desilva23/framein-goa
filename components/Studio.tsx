@@ -16,7 +16,7 @@ import { PFP_SIZE, renderPfp } from "@/lib/render-pfp";
 import { CARD_H, CARD_W, renderCard } from "@/lib/render-card";
 import { builderTitle } from "@/lib/titles";
 import { renderOg } from "@/lib/render-og";
-import { linkedInShareUrl, SHARE_TEXT } from "@/lib/site";
+import { SHARE_TEXT } from "@/lib/site";
 
 type Mode = "pfp" | "card";
 
@@ -633,14 +633,6 @@ function Actions({
           className="flex-1 w-full text-center rounded-xl bg-hh-yellow text-hh-green-deep font-extrabold py-3 px-4 text-sm hover:brightness-95 active:brightness-90 transition"
         >
           Open X →
-        </a>
-        <a
-          href={linkedInShareUrl(share.pageUrl)}
-          target="_blank"
-          rel="noreferrer"
-          className="flex-1 w-full text-center rounded-xl border-2 border-hh-cream/35 font-bold py-3 px-4 text-sm hover:border-hh-yellow hover:text-hh-yellow transition"
-        >
-          LinkedIn
         </a>
         <button
           onClick={onCopy}

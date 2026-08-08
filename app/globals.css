@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
+/* Brand tokens sampled from hhgoa.com. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --hh-green: #0b6839;
+  --hh-green-deep: #074a28;
+  --hh-yellow: #fee101;
+  --hh-pink: #ff0080;
+  --hh-cream: #fffbe8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-hh-green: var(--hh-green);
+  --color-hh-green-deep: var(--hh-green-deep);
+  --color-hh-yellow: var(--hh-yellow);
+  --color-hh-pink: var(--hh-pink);
+  --color-hh-cream: var(--hh-cream);
+  --font-display: "Imbue", ui-serif, Georgia, serif;
+  --font-mono: "Victor Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--hh-green-deep);
+  /* Keeps the sticky action bar clear of the iOS home indicator. */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--hh-green);
+  color: var(--hh-cream);
+  font-family: var(--font-mono);
+  overscroll-behavior-y: none;
+}
+
+/* Faint horizon grid, echoing the site's vector treatment. */
+.hh-grid {
+  background-image:
+    linear-gradient(rgba(255, 251, 232, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 251, 232, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.hh-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+}
+
+/* Range inputs, restyled to brand in both engines. */
+.hh-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 34px;
+  background: transparent;
+  width: 100%;
+}
+.hh-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 251, 232, 0.28);
+}
+.hh-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 251, 232, 0.28);
+}
+.hh-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -10px;
+  border-radius: 999px;
+  background: var(--hh-yellow);
+  border: 3px solid var(--hh-green-deep);
+  cursor: pointer;
+}
+.hh-range::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--hh-yellow);
+  border: 3px solid var(--hh-green-deep);
+  cursor: pointer;
+  border-width: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

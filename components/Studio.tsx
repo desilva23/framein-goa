@@ -251,9 +251,24 @@ export default function Studio() {
       setShare({ pageUrl, intentUrl });
       setStatus("Ready — tap Open X to post it.");
 
-      // Best-effort: on desktop this lands straight in X. If the browser
-      // declines, the anchor below is the guaranteed path.
-      window.open(intentUrl, "_blank", "noopener,noreferrer");
+      // Try a new tab first, but fall back to navigating this one.
+      //
+      // Two subtleties. `noopener` in the feature string forces window.open to
+      // return null by spec, which would make a blocked popup indistinguishable
+      // from a successful one — so it is set manually on the handle instead.
+      // And because the upload above spent the user's gesture, mobile browsers
+      // routinely refuse the popup; a same-tab navigation is never blocked, so
+      // that is the fallback rather than leaving the user on an unchanged page.
+      const opened = window.open(intentUrl, "_blank");
+      if (opened) {
+        try {
+          opened.opener = null;
+        } catch {
+          // Cross-origin handle; nothing to harden.
+        }
+      } else {
+        window.location.href = intentUrl;
+      }
     } catch {
       setError("Couldn't upload. Download the image and attach it to your post instead.");
       setStatus(null);

@@ -44,9 +44,9 @@ export type CardOptions = {
 const CARD = { x: 56, y: 56, w: 1088, h: 1388, r: 48 };
 const HEADER_BOTTOM = 380;
 const PHOTO = { x: 320, y: 400, size: 560, r: 28 };
-const INFO_TOP = 1200;
-const QR_SIZE = 96;
-const BAND_TOP = 1320;
+const INFO_TOP = 1190;
+const QR_SIZE = 104;
+const BAND_TOP = 1330;
 
 export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
   const ctx = canvas.getContext("2d")!;
@@ -166,10 +166,10 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
   const pillTextW = trackedWidth(ctx, titleText, 4);
   const pillW = Math.min(pillTextW + 84, 1000);
   ctx.fillStyle = COLORS.pink;
-  roundRectPath(ctx, (CARD_W - pillW) / 2, 1112, pillW, 62, 31);
+  roundRectPath(ctx, (CARD_W - pillW) / 2, 1100, pillW, 62, 31);
   ctx.fill();
   ctx.fillStyle = COLORS.cream;
-  drawTracked(ctx, titleText, CARD_W / 2, 1152, 4, "center");
+  drawTracked(ctx, titleText, CARD_W / 2, 1140, 4, "center");
 
   // --- QR + contact strip -------------------------------------------------
   const qrX = 116;
@@ -181,44 +181,60 @@ export async function renderCard(canvas: HTMLCanvasElement, opts: CardOptions) {
     ctx.drawImage(qr, qrX, INFO_TOP, QR_SIZE, QR_SIZE);
   }
 
-  const textX = qrX + QR_SIZE + 30;
-  const label = (text: string, y: number) => {
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.font = `500 15px "${MONO}", ui-monospace, monospace`;
-    drawTracked(ctx, text, textX, y, 3, "left");
-  };
-  const value = (text: string, y: number, size: number, color: string) => {
-    ctx.fillStyle = color;
-    const s = fitFontSize(
-      ctx,
-      text,
-      CARD.x + CARD.w - 60 - textX,
-      size,
-      (v) => `700 ${v}px "${MONO}", ui-monospace, monospace`,
-      14,
-    );
-    drawTracked(ctx, text, textX, y, s * 0.06, "left");
-  };
+  const textX = qrX + QR_SIZE + 28;
+  const textW = CARD.x + CARD.w - 56 - textX;
 
-  // First row always describes the QR, so the caption matches what scanning does.
-  const rows = [{ label: target.label, value: target.display }];
+  // Every field the user filled gets its own row. The first always describes
+  // the QR, so its caption matches where scanning actually lands.
+  const rows: { label: string; value: string; accent: boolean }[] = [
+    { label: target.label, value: target.display, accent: true },
+  ];
+  if (handle && !target.display.startsWith("@")) {
+    // The QR went to GitHub, so the X handle still needs saying.
+    rows.push({ label: "FIND ME AT", value: `@${handle}`.toLowerCase(), accent: false });
+  }
   if (shipping) {
     // Prose, so it keeps whatever casing the user typed.
-    rows.push({ label: "CURRENTLY SHIPPING", value: shipping });
-  } else if (handle && !target.display.startsWith("@")) {
-    // QR went to GitHub, so the X handle still gets its own line.
-    rows.push({ label: "FIND ME AT", value: `@${handle}`.toLowerCase() });
+    rows.push({ label: "CURRENTLY SHIPPING", value: shipping, accent: false });
   }
 
-  if (rows.length === 2) {
-    label(rows[0].label, INFO_TOP + 16);
-    value(rows[0].value, INFO_TOP + 46, 27, COLORS.green);
-    label(rows[1].label, INFO_TOP + 72);
-    value(rows[1].value, INFO_TOP + 98, 23, COLORS.black);
-  } else {
-    label(rows[0].label, INFO_TOP + 30);
-    value(rows[0].value, INFO_TOP + 68, 32, COLORS.green);
-  }
+  // Type scales down as rows are added, and the block stays centred on the QR
+  // however many there are.
+  const metrics = [
+    { labelSize: 15, valueSize: 30, gap: 6, rowH: 56 },
+    { labelSize: 14, valueSize: 25, gap: 6, rowH: 54 },
+    // Tighter label/value pairing, wider gutter between rows, so three rows
+    // still read as three pairs rather than one block of six lines.
+    { labelSize: 12, valueSize: 20, gap: 4, rowH: 47 },
+  ][Math.min(rows.length, 3) - 1];
+
+  const blockTop = INFO_TOP + QR_SIZE / 2 - (rows.length * metrics.rowH) / 2;
+
+  rows.forEach((row, i) => {
+    const rowTop = blockTop + i * metrics.rowH;
+
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.font = `500 ${metrics.labelSize}px "${MONO}", ui-monospace, monospace`;
+    drawTracked(ctx, row.label, textX, rowTop + metrics.labelSize, 3, "left");
+
+    ctx.fillStyle = row.accent ? COLORS.green : COLORS.black;
+    const size = fitFontSize(
+      ctx,
+      row.value,
+      textW,
+      metrics.valueSize,
+      (v) => `700 ${v}px "${MONO}", ui-monospace, monospace`,
+      13,
+    );
+    drawTracked(
+      ctx,
+      row.value,
+      textX,
+      rowTop + metrics.labelSize + metrics.gap + metrics.valueSize,
+      size * 0.06,
+      "left",
+    );
+  });
 
   // --- Palm band ----------------------------------------------------------
   ctx.save();

@@ -48,8 +48,11 @@ in `public/brand/`.
 
 ```bash
 npm install
-npm run dev
+npm run dev   # http://localhost:3100
 ```
+
+The dev port is pinned to 3100 so it doesn't collide with anything already on
+3000.
 
 Sharing-by-link needs a Vercel Blob store. Without one the app still uploads
 nothing and works end to end — upload, render, and download all run offline, and

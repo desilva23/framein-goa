@@ -42,16 +42,18 @@ export function qrTarget(github?: string, xHandle?: string): QrTarget {
     return {
       url: `https://github.com/${gh}`,
       label: "SCAN FOR MY CODE",
-      display: `GITHUB.COM/${gh}`.toUpperCase(),
+      // Values stay lowercase — they read as the URLs and handles they are,
+      // rather than as more of the card's uppercase display setting.
+      display: `github.com/${gh}`.toLowerCase(),
     };
   }
 
   const x = cleanX(xHandle);
   if (x) {
-    return { url: `https://x.com/${x}`, label: "FIND ME AT", display: `@${x}` };
+    return { url: `https://x.com/${x}`, label: "FIND ME AT", display: `@${x}`.toLowerCase() };
   }
 
-  return { url: "https://hhgoa.com", label: "THE RESIDENCY", display: "HHGOA.COM" };
+  return { url: "https://hhgoa.com", label: "THE RESIDENCY", display: "hhgoa.com" };
 }
 
 /**

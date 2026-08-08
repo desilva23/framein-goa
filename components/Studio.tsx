@@ -60,10 +60,18 @@ export default function Studio() {
   useEffect(() => {
     preloadBrand();
     ensureFonts();
-    // Feature-detect once; iOS/Android get the native sheet, desktop gets the link flow.
+    // Prefer the native sheet only on touch devices.
+    //
+    // canShare() alone is not enough: macOS Safari reports true, but its share
+    // sheet offers AirDrop, Mail and Notes — nothing that can post to X — so a
+    // desktop handed that sheet has no route to X at all. A coarse pointer is
+    // what actually distinguishes a phone or tablet, where the sheet does list
+    // the social apps and can attach the PNG itself.
     try {
+      const touch =
+        window.matchMedia?.("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
       const probe = new File([new Blob(["x"])], "probe.png", { type: "image/png" });
-      setCanShareFiles(Boolean(navigator.canShare?.({ files: [probe] })));
+      setCanShareFiles(touch && Boolean(navigator.canShare?.({ files: [probe] })));
     } catch {
       setCanShareFiles(false);
     }
